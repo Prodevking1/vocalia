@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:voice_app/services/openai.dart';
 
 void main() {
   runApp(EntryApp());
@@ -15,12 +16,15 @@ class EntryApp extends StatefulWidget {
 class _EntryAppState extends State<EntryApp> {
   stt.SpeechToText speech = stt.SpeechToText();
   bool isListening = false;
-  String finalText = '';
+  String recognizedWords = '';
+
+  OpenAiService openAiService = OpenAiService();
 
   @override
   void initState() {
-    super.initState();
     speech.initialize();
+    openAiService.init();
+    super.initState();
   }
 
   @override
@@ -28,30 +32,42 @@ class _EntryAppState extends State<EntryApp> {
     return MaterialApp(
       home: Scaffold(
           appBar: AppBar(
-            title: Text('Demo App'),
+            title: Text('Voice app'),
           ),
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                finalText.isEmpty ? Text('Please speak') : Text(finalText),
+                Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.grey[300],
+                    ),
+                    width: 300,
+                    height: 150,
+                    child: Center(
+                      child: Text(
+                        (recognizedWords != '') ? recognizedWords : '',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    )),
                 GestureDetector(
                   onTap: () {
                     setState(() {
                       isListening = true;
                     });
-
                     speech.listen(onResult: (result) {
-                      print(result.recognizedWords);
-                      finalText = result.recognizedWords;
                       setState(() {
                         isListening = false;
                       });
+                      recognizedWords = result.recognizedWords;
+                      print(result.recognizedWords);
+                      openAiService.sendPrompt(recognizedWords);
                     });
                   },
-                  child: isListening
-                      ? Center()
-                      : Icon(Icons.mic, size: 60, color: Colors.green),
+                  child: !isListening
+                      ? Icon(Icons.mic, size: 60, color: Colors.red)
+                      : Center(),
                 )
               ],
             ),
