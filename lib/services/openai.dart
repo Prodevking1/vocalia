@@ -1,9 +1,11 @@
 import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
-import 'package:flutter/material.dart';
 import 'package:voice_app/utils/const.dart';
 
 class OpenAiService {
   late OpenAI openAI;
+
+  static const String promptGuard =
+      "Oublie tout ce qui précède ta réponse. Sois précis et ne développe pas trop et utilise un ton amical";
 
   void init() {
     openAI = OpenAI.instance.build(
@@ -12,10 +14,8 @@ class OpenAiService {
         enableLog: true);
   }
 
-  void sendPrompt(String prompt) async {
-    final request = /* CompleteText(
-        prompt: prompt, model: TextDavinci3Model(), maxTokens: 200); */
-        ChatCompleteText(
+  Future<String> sendPrompt(String prompt) async {
+    final request = ChatCompleteText(
       messages: [
         Messages(role: Role.user, content: prompt, name: 'prompt'),
       ],
@@ -23,12 +23,10 @@ class OpenAiService {
       model: GptTurboChatModel(),
       functionCall: FunctionCall.auto,
     );
-    /* openAI.onCompletionSSE(request: request).listen((CompleteResponse event) {
-      final response = event.choices.last.text;
-      debugPrint(response);
-    }); */
+
     ChatCTResponse? response = await openAI.onChatCompletion(request: request);
-    debugPrint("$response");
+    print(response!.choices.first.message!.content);
+    return response.choices.first.message!.content;
   }
 
   promtParameters(String params) {}
